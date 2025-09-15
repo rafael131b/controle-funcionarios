@@ -18,8 +18,6 @@ interface TableListProps {
 }
 
 
-const baseHeaderClass = 'px-4 !px-4 text-[#58575A]';
-
 const headers = [
   { label: 'Nome', className: 'w-[200px]' },
   { label: 'Email', className: '' },
@@ -30,6 +28,16 @@ const headers = [
   { label: 'Status', className: '' },
   { label: 'Ação', className: 'text-right' },
 ];
+
+const formatCPF = (cpf: string): string => {
+  if (!cpf || cpf.length !== 11) return cpf;
+  return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`;
+};
+
+const formatPhone = (phone: string): string => {
+  if (!phone || phone.length !== 11) return phone;
+  return `(${phone.slice(0, 2)}) ${phone.slice(2, 7)}-${phone.slice(7)}`;
+};
 
 export function TableList({ employees, onDelete }: TableListProps) {
   const router = useRouter();
@@ -51,8 +59,8 @@ export function TableList({ employees, onDelete }: TableListProps) {
           <TableRow key={item.id} className="h-12 px-4 !px-4 ">
             <TableCell className="px-4 !px-4">{item.name}</TableCell>
             <TableCell className="px-4 !px-4">{item.email}</TableCell>
-            <TableCell className="px-4 !px-4">{item.cpf}</TableCell>
-            <TableCell className="px-4 !px-4">{item.phone}</TableCell>
+            <TableCell className="px-4 !px-4">{formatCPF(item.cpf)}</TableCell>
+            <TableCell className="px-4 !px-4">{formatPhone(item.phone)}</TableCell>
             <TableCell className="px-4 !px-4">{new Date(item.dateOfBith).toLocaleDateString('pt-BR')}</TableCell>
             <TableCell className="px-4 !px-4">{item.typeOfHiring}</TableCell>
             <TableCell>

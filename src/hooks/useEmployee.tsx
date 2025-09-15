@@ -2,7 +2,7 @@
 "use client"
 import { fetchEmployee, getEmployee, createEmployee, updateEmployee, deleteEmployee as apiDeleteEmployee } from "@/api/api";
 import { ListEmployee } from "@/interfaces/interfaces";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 
 
@@ -13,7 +13,7 @@ export const useEmployees = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadEmployees = async () => {
+  const loadEmployees = useCallback(async () => {
     try {
       const response = await fetchEmployee();
       if (!response.ok) {
@@ -26,13 +26,13 @@ export const useEmployees = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadEmployees();
   }, []);
 
-  const getEmployeeById = async (id: string) => {
+  const getEmployeeById = useCallback(async (id: string) => {
     try {
       const response = await getEmployee(id);
       if (!response.ok) {
@@ -43,9 +43,9 @@ export const useEmployees = () => {
       setError(err instanceof Error ? err.message : 'An error occurred');
       return null;
     }
-  };
+  }, []);
 
-  const createNewEmployee = async (data: any) => {
+  const createNewEmployee = useCallback(async (data: any) => {
     try {
       const response = await createEmployee(data);
       if (!response.ok) {
@@ -58,9 +58,9 @@ export const useEmployees = () => {
       setError(err instanceof Error ? err.message : 'An error occurred');
       return false;
     }
-  };
+  }, [loadEmployees]);
 
-  const updateExistingEmployee = async (id: string, data: any) => {
+  const updateExistingEmployee = useCallback(async (id: string, data: any) => {
     try {
       const response = await updateEmployee(id, data);
       if (!response.ok) {
@@ -73,9 +73,9 @@ export const useEmployees = () => {
       setError(err instanceof Error ? err.message : 'An error occurred');
       return false;
     }
-  };
+  }, [loadEmployees]);
 
-  const deleteEmployee = async (id: number) => {
+  const deleteEmployee = useCallback(async (id: number) => {
     try {
       const response = await apiDeleteEmployee(id.toString());
       if (!response.ok) {
@@ -87,7 +87,7 @@ export const useEmployees = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     }
-  };
+  }, [loadEmployees]);
 
   const [searchQuery, setSearchQuery] = useState('');
 

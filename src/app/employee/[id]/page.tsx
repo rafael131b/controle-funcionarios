@@ -1,15 +1,26 @@
+"use client"
+
 import FormUser from "@/components/form/form"
 import Title from "@/components/title/title";
-import { getEmployee } from "@/api/api";
+import { useEmployees } from "@/hooks/useEmployee";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
+const editarUsuario = () => {
+  const params = useParams();
+  const id = params.id as string;
+  const { getEmployeeById } = useEmployees();
+  const [employee, setEmployee] = useState(null);
 
-const editarUsuario = async ({ params }: PageProps) => {
-  const { id } = await params;
-  const res = await getEmployee(id);
-  const employee = await res.json();
+  useEffect(() => {
+    const fetchEmployee = async () => {
+      const data = await getEmployeeById(id);
+      setEmployee(data);
+    };
+    if (id) {
+      fetchEmployee();
+    }
+  }, [id, getEmployeeById]);
 
   return (
     <section>

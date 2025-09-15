@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { useState, useRef } from "react"
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -27,6 +27,8 @@ type FormData = z.infer<typeof formSchema>;
 const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, employeeId }: { buttonText?: string; isEdit?: boolean; initialData?: any; employeeId?: string }) => {
     const router = useRouter();
     const { createNewEmployee, updateExistingEmployee, deleteEmployee } = useEmployees();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittingRef = useRef(false);
 
     const handleDelete = async () => {
         if (!employeeId) return;
@@ -49,26 +51,36 @@ const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, emplo
     });
 
     const onSubmit = async (data: FormData) => {
-        // Map form data to API format
-        const apiData = {
-            name: data.nome,
-            email: data.email,
-            cpf: data.cpf,
-            phone: data.celular,
-            dateOfBith: data.dataNascimento,
-            typeOfHiring: data.tipoContratacao,
-            status: data.status === "Ativo", // Convert back to boolean
-        };
+        if (isSubmittingRef.current) return; // Prevent duplicate submissions
 
-        let success = false;
-        if (isEdit && employeeId) {
-            success = await updateExistingEmployee(employeeId, apiData);
-        } else {
-            success = await createNewEmployee(apiData);
-        }
+        isSubmittingRef.current = true;
+        setIsSubmitting(true);
 
-        if (success) {
-            router.push('/');
+        try {
+            // Map form data to API format
+            const apiData = {
+                name: data.nome,
+                email: data.email,
+                cpf: data.cpf,
+                phone: data.celular,
+                dateOfBith: data.dataNascimento,
+                typeOfHiring: data.tipoContratacao,
+                status: data.status === "Ativo", // Convert back to boolean
+            };
+
+            let success = false;
+            if (isEdit && employeeId) {
+                success = await updateExistingEmployee(employeeId, apiData);
+            } else {
+                success = await createNewEmployee(apiData);
+            }
+
+            if (success) {
+                router.push('/');
+            }
+        } finally {
+            isSubmittingRef.current = false;
+            setIsSubmitting(false);
         }
     };
 
@@ -188,8 +200,10 @@ const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, emplo
                     />
                 </div>
                 <div className="mt-6 flex justify-start gap-4">
-                    {isEdit && <Button variant="destructive" onClick={handleDelete}>Excluir Funcionário</Button>}
-                    <Button type="submit" variant="default">{buttonText}</Button>
+                    {isEdit && <Button variant="destructive" onClick={handleDelete} disabled={isSubmitting}>Excluir Funcionário</Button>}
+                    <Button type="submit" variant="default" disabled={isSubmitting}>
+                        {isSubmitting ? "Salvando..." : buttonText}
+                    </Button>
                 </div>
             </div>
             </form>
