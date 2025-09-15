@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/table"
 import { ListEmployee } from "@/interfaces/interfaces"
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface TableListProps {
   employees: ListEmployee[];
+  onDelete: (id: number) => void;
 }
 
 
@@ -29,9 +31,9 @@ const headers = [
   { label: 'Ação', className: 'text-right' },
 ];
 
-export function TableList({ employees }: TableListProps) {
+export function TableList({ employees, onDelete }: TableListProps) {
+  const router = useRouter();
 
-  console.log("employees table ",employees)
   return (
     <Table className="border border-[#CDCAD2]">
       
@@ -61,10 +63,14 @@ export function TableList({ employees }: TableListProps) {
               </span>
             </TableCell>
             <TableCell className="text-right flex justify-end gap-2">
-              <button className="p-1 hover:bg-gray-100 rounded cursor-pointer">
+              <button className="p-1 hover:bg-gray-100 rounded cursor-pointer" onClick={() => router.push(`/employee/${item.id}`)}>
                 <Image src="/edit.png" alt="Editar" height={18} width={18} />
               </button>
-              <button className="p-1 hover:bg-gray-100 rounded cursor-pointer">
+              <button className="p-1 hover:bg-gray-100 rounded cursor-pointer" onClick={() => {
+                if (window.confirm('Tem certeza que deseja excluir este funcionário?')) {
+                  onDelete(item.id);
+                }
+              }}>
                 <Image src="/delete.png" alt="Deletar" className="" height={18} width={16} />
               </button>
             </TableCell>

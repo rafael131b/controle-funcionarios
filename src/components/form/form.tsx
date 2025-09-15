@@ -5,7 +5,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Input } from "../ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Button } from "../ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useEmployees } from "../../hooks/useEmployee";
 
 const formSchema = z.object({
     nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -14,26 +19,63 @@ const formSchema = z.object({
     celular: z.string().regex(/^\d{10,11}$/, "Celular deve ter 10 ou 11 dígitos"),
     dataNascimento: z.string().refine((val) => !isNaN(Date.parse(val)), "Data inválida"),
     tipoContratacao: z.string().min(1, "Tipo de contratação é obrigatório"),
-    status: z.string().min(1, "Status é obrigatório"),
+    status: z.enum(["Ativo", "Inativo"], "Selecione o status"),
 });
 
-const FormUser = () => {
-    const form = useForm<z.infer<typeof formSchema>>({
+type FormData = z.infer<typeof formSchema>;
+
+const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, employeeId }: { buttonText?: string; isEdit?: boolean; initialData?: any; employeeId?: string }) => {
+    const router = useRouter();
+    const { createNewEmployee, updateExistingEmployee, deleteEmployee } = useEmployees();
+
+    const handleDelete = async () => {
+        if (!employeeId) return;
+        if (!window.confirm('Tem certeza que deseja excluir este funcionário?')) return;
+        await deleteEmployee(parseInt(employeeId));
+        router.push('/');
+    };
+
+    const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            nome: "",
-            email: "",
-            cpf: "",
-            celular: "",
-            dataNascimento: "",
-            tipoContratacao: "",
-            status: "",
+            nome: initialData?.name || "",
+            email: initialData?.email || "",
+            cpf: initialData?.cpf || "",
+            celular: initialData?.phone || "",
+            dataNascimento: initialData?.dateOfBith ? new Date(initialData.dateOfBith).toISOString().split('T')[0] : "",
+            tipoContratacao: initialData?.typeOfHiring || "",
+            status: initialData?.status ? "Ativo" : "Inativo",
         },
     });
 
+    const onSubmit = async (data: FormData) => {
+        // Map form data to API format
+        const apiData = {
+            name: data.nome,
+            email: data.email,
+            cpf: data.cpf,
+            phone: data.celular,
+            dateOfBith: data.dataNascimento,
+            typeOfHiring: data.tipoContratacao,
+            status: data.status === "Ativo", // Convert back to boolean
+        };
+
+        let success = false;
+        if (isEdit && employeeId) {
+            success = await updateExistingEmployee(employeeId, apiData);
+        } else {
+            success = await createNewEmployee(apiData);
+        }
+
+        if (success) {
+            router.push('/');
+        }
+    };
+
     return (
         <Form {...form}>
-            <div className="w-[1180px] min-h-[333px] rotate-0 opacity-100 absolute top-[240px] left-[130px] rounded-xl shadow-[1px_1px_16px_0px_#00000026] p-6 bg-white">
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+                <div className="w-full min-h-[333px] rotate-0 opacity-100 rounded-xl shadow-[1px_1px_16px_0px_#00000026] p-6 bg-white">
                 <div className="grid grid-cols-3 gap-6">
                     <FormField
                         control={form.control}
@@ -106,9 +148,19 @@ const FormUser = () => {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Tipo de Contratação</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Digite o tipo de contratação" {...field} />
-                                </FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Selecione o tipo de contratação" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="CLT">CLT</SelectItem>
+                                        <SelectItem value="PJ">PJ</SelectItem>
+                                        <SelectItem value="Temporário">Temporário</SelectItem>
+                                        <SelectItem value="Estágio">Estágio</SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <FormMessage />
                             </FormItem>
                         )}
@@ -119,15 +171,28 @@ const FormUser = () => {
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Status</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Digite o status" {...field} />
-                                </FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Selecione o status" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="Ativo">Ativo</SelectItem>
+                                        <SelectItem value="Inativo">Inativo</SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 <FormMessage />
                             </FormItem>
                         )}
                     />
                 </div>
+                <div className="mt-6 flex justify-start gap-4">
+                    {isEdit && <Button variant="destructive" onClick={handleDelete}>Excluir Funcionário</Button>}
+                    <Button type="submit" variant="default">{buttonText}</Button>
+                </div>
             </div>
+            </form>
         </Form>
     )
 }
