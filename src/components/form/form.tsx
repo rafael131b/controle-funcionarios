@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,14 +15,22 @@ import { useEmployees } from "../../hooks/useEmployee";
 const formSchema = z.object({
     nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
     email: z.string().email("Email inválido"),
-    cpf: z.string().regex(/^\d{11}$/, "CPF deve ter 11 dígitos"),
-    celular: z.string().regex(/^\d{10,11}$/, "Celular deve ter 10 ou 11 dígitos"),
+    cpf: z.string().regex(/^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{11})$/, "CPF deve ter 11 dígitos ou formato XXX.XXX.XXX-XX"),
+    celular: z.string().regex(/^(\(\d{2}\) \d{5}-\d{4}|\d{10,11})$/, "Celular deve ter 10 ou 11 dígitos ou formato (XX) XXXXX-XXXX"),
     dataNascimento: z.string().refine((val) => !isNaN(Date.parse(val)), "Data inválida"),
     tipoContratacao: z.string().min(1, "Tipo de contratação é obrigatório"),
     status: z.enum(["Ativo", "Inativo"], "Selecione o status"),
 });
 
 type FormData = z.infer<typeof formSchema>;
+
+const stripCPFFormatting = (cpf: string): string => {
+    return cpf.replace(/\D/g, '');
+};
+
+const stripPhoneFormatting = (phone: string): string => {
+    return phone.replace(/\D/g, '');
+};
 
 const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, employeeId }: { buttonText?: string; isEdit?: boolean; initialData?: any; employeeId?: string }) => {
     const router = useRouter();
@@ -42,13 +50,27 @@ const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, emplo
         defaultValues: {
             nome: initialData?.name || "",
             email: initialData?.email || "",
-            cpf: initialData?.cpf || "",
-            celular: initialData?.phone || "",
+            cpf: initialData?.cpf ? stripCPFFormatting(initialData.cpf) : "",
+            celular: initialData?.phone ? stripPhoneFormatting(initialData.phone) : "",
             dataNascimento: initialData?.dateOfBith ? new Date(initialData.dateOfBith).toISOString().split('T')[0] : "",
             tipoContratacao: initialData?.typeOfHiring || "",
             status: initialData?.status ? "Ativo" : "Inativo",
         },
     });
+
+    useEffect(() => {
+        if (initialData) {
+            form.reset({
+                nome: initialData.name || "",
+                email: initialData.email || "",
+                cpf: initialData.cpf ? stripCPFFormatting(initialData.cpf) : "",
+                celular: initialData.phone ? stripPhoneFormatting(initialData.phone) : "",
+                dataNascimento: initialData.dateOfBith ? new Date(initialData.dateOfBith).toISOString().split('T')[0] : "",
+                tipoContratacao: initialData.typeOfHiring || "",
+                status: initialData.status ? "Ativo" : "Inativo",
+            });
+        }
+    }, [initialData, form]);
 
     const onSubmit = async (data: FormData) => {
         if (isSubmittingRef.current) return; // Prevent duplicate submissions
@@ -61,8 +83,8 @@ const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, emplo
             const apiData = {
                 name: data.nome,
                 email: data.email,
-                cpf: data.cpf,
-                phone: data.celular,
+                cpf: stripCPFFormatting(data.cpf),
+                phone: stripPhoneFormatting(data.celular),
                 dateOfBith: data.dataNascimento,
                 typeOfHiring: data.tipoContratacao,
                 status: data.status === "Ativo", // Convert back to boolean
