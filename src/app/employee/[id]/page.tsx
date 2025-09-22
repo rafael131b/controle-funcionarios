@@ -5,6 +5,8 @@ import Title from "@/components/title/title";
 import { useEmployees } from "@/hooks/useEmployee";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const editarUsuario = () => {
   const params = useParams();
@@ -25,10 +27,18 @@ const editarUsuario = () => {
   return (
     <section>
       <div className="w-[1180px] mx-auto">
-        <div className="mt-8">
-          <Title title="Editar Funcionário" subtitle="Edição de Funcionário"/>
+        <div className="mb-4">
+          <Link href="/" className="flex items-center text-[#0B0B0C] font-sans font-bold text-base leading-none tracking-normal hover:text-gray-700 cursor-pointer mt-8">
+            <ArrowLeft className="mr-2 h-4 w-4 text-[#0B0B0C]" />
+            Voltar
+          </Link>
         </div>
-        <FormUser buttonText="Salvar" isEdit={true} initialData={employee} employeeId={id} />
+        <div className="mt-4">
+          <Title title="Editar Funcionário" subtitle="Empresa DoQR Tecnologia"/>
+        </div>
+       <div className="mt-8">
+         <FormUser buttonText="Salvar" isEdit={true} initialData={employee} employeeId={id} />
+       </div>
       </div>
     </section>
   );

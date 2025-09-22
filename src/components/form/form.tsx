@@ -73,13 +73,12 @@ const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, emplo
     }, [initialData, form]);
 
     const onSubmit = async (data: FormData) => {
-        if (isSubmittingRef.current) return; // Prevent duplicate submissions
+        if (isSubmittingRef.current) return;
 
         isSubmittingRef.current = true;
         setIsSubmitting(true);
 
         try {
-            // Map form data to API format
             const apiData = {
                 name: data.nome,
                 email: data.email,
@@ -87,7 +86,7 @@ const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, emplo
                 phone: stripPhoneFormatting(data.celular),
                 dateOfBith: data.dataNascimento,
                 typeOfHiring: data.tipoContratacao,
-                status: data.status === "Ativo", // Convert back to boolean
+                status: data.status === "Ativo",
             };
 
             let success = false;
@@ -140,28 +139,45 @@ const FormUser = ({ buttonText = "Cadastrar", isEdit = false, initialData, emplo
                     <FormField
                         control={form.control}
                         name="cpf"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>CPF</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Digite o CPF (11 dígitos)" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        render={({ field }) => {
+                            const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                let value = e.target.value.replace(/\D/g, '');
+                                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                                field.onChange(value);
+                            };
+                            return (
+                                <FormItem>
+                                    <FormLabel>CPF</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Digite o CPF" value={field.value} onChange={handleCPFChange} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            );
+                        }}
                     />
                     <FormField
                         control={form.control}
                         name="celular"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Celular</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="Digite o celular" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
+                        render={({ field }) => {
+                            const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                                let value = e.target.value.replace(/\D/g, '');
+                                value = value.replace(/(\d{2})(\d)/, '($1) $2');
+                                value = value.replace(/(\d{5})(\d{1,4})$/, '$1-$2');
+                                field.onChange(value);
+                            };
+                            return (
+                                <FormItem>
+                                    <FormLabel>Celular</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Digite o celular" value={field.value} onChange={handlePhoneChange} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            );
+                        }}
                     />
                     <FormField
                         control={form.control}
